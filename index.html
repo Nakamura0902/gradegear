@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>GradeGear Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f7;
+      color: #222;
+    }
+
+    header {
+      padding: 12px 24px;
+      background: #1f2937;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+    header span {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    main {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+      padding: 16px;
+      height: calc(100vh - 56px);
+    }
+    .panel {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .panel h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel h3 {
+      margin: 12px 0 6px;
+      font-size: 14px;
+    }
+    .panel small {
+      color: #6b7280;
+      font-size: 11px;
+    }
+    .list {
+      margin-top: 8px;
+      padding: 0;
+      list-style: none;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .list-item {
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      border: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      align-items: center;
+      cursor: pointer;
+      background: #fafafa;
+    }
+    .list-item.active {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+    .list-item-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .list-item-sub {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #e5e7eb;
+    }
+    form {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    input, select, textarea {
+      font: inherit;
+      padding: 5px 7px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 40px;
+    }
+    button {
+      font: inherit;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: #2563eb;
+      color: #fff;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    button.danger {
+      background: #ef4444;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .grow {
+      flex: 1;
+    }
+    .summary-block {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 8px;
+      border: 1px solid #e5e7eb;
+      font-size: 12px;
+      white-space: pre-wrap;
+      max-height: 140px;
+      overflow: auto;
+    }
+    .tasks-list {
+      margin-top: 4px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .task-row {
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      background: #f9fafb;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+    .task-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .task-title {
+      font-weight: 600;
+    }
+    .task-meta {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    .status-pill {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #e5e7eb;
+    }
+    .status-todo { background: #fee2e2; }
+    .status-doing { background: #fef3c7; }
+    .status-done { background: #dcfce7; }
+    .error {
+      color: #b91c1c;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+    .muted {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    @media (max-width: 800px) {
+      main {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>GradeGear Dashboard</h1>
+      <span>科目とタスクの成績管理（ローカルAPI連携）</span>
+    </div>
+    <div style="font-size:12px;">API: <code>http://127.0.0.1:8000</code></div>
+  </header>
+
+  <main>
+    <!-- 左：科目 -->
+    <section class="panel" id="subjects-panel">
+      <h2>
+        科目一覧
+        <button id="reload-subjects-btn" class="secondary" type="button">再読み込み</button>
+      </h2>
+      <small>クリックすると右側に詳細（タスク・必要点数）が表示されるよ</small>
+
+      <ul id="subjects-list" class="list"></ul>
+      <div id="subjects-empty" class="muted" style="display:none;">まだ科目がありません。下のフォームから追加してね。</div>
+
+      <h3>科目を追加</h3>
+      <form id="subject-form">
+        <label>
+          科目名
+          <input name="name" required placeholder="例：線形代数" />
+        </label>
+        <label>
+          担当教員（任意）
+          <input name="teacher" placeholder="例：山田先生" />
+        </label>
+        <label>
+          単位数（任意）
+          <input name="credit" type="number" min="0" step="0.5" placeholder="例：2" />
+        </label>
+        <label>
+          メモ（任意）
+          <textarea name="memo" placeholder="授業の特徴や注意点など"></textarea>
+        </label>
+        <div class="row">
+          <button type="submit">科目を保存</button>
+          <div id="subject-form-error" class="error"></div>
+        </div>
+      </form>
+    </section>
+
+    <!-- 右：詳細（summary / need / tasks） -->
+    <section class="panel" id="detail-panel">
+      <h2>
+        科目詳細
+        <span id="selected-subject-name" class="muted">未選択</span>
+      </h2>
+
+      <div id="detail-placeholder" class="muted">
+        左のリストから科目を選ぶと、ここに成績サマリーとタスク一覧が表示されるよ。
+      </div>
+
+      <div id="detail-content" style="display:none; flex:1; display:flex; flex-direction:column; gap:12px;">
+        <!-- summary & need -->
+        <div>
+          <h3>成績サマリー</h3>
+          <div id="summary-block" class="summary-block">読み込み中...</div>
+
+          <h3 style="margin-top:10px;">目標成績から必要な点数を計算</h3>
+          <form id="need-form" class="row">
+            <span style="font-size:12px;">目標成績</span>
+            <input name="target_grade" type="text" class="grow" placeholder="例：A, S, 80 など" required />
+            <button type="submit">計算</button>
+          </form>
+          <div id="need-result" class="summary-block" style="margin-top:4px; min-height:40px;">まだ計算していません。</div>
+        </div>
+
+        <!-- tasks -->
+        <div style="display:flex; flex-direction:column; flex:1; min-height:0;">
+          <div class="row" style="justify-content:space-between; align-items:center;">
+            <h3 style="margin:0;">タスク一覧</h3>
+            <button id="reload-tasks-btn" class="secondary" type="button">更新</button>
+          </div>
+          <div id="tasks-empty" class="muted" style="display:none;">この科目にはまだタスクがありません。</div>
+          <div id="tasks-list" class="tasks-list"></div>
+
+          <h3>タスクを追加</h3>
+          <form id="task-form">
+            <label>
+              タイトル
+              <input name="title" required placeholder="例：中間テスト勉強 / レポート提出" />
+            </label>
+            <label>
+              詳細（任意）
+              <textarea name="description" placeholder="範囲・締切など自由にメモ"></textarea>
+            </label>
+            <label>
+              期限（任意）
+              <input name="due_date" type="date" />
+            </label>
+            <label>
+              ステータス
+              <select name="status">
+                <option value="todo">やること</option>
+                <option value="doing">進行中</option>
+                <option value="done">完了</option>
+              </select>
+            </label>
+            <div class="row">
+              <button type="submit">タスクを保存</button>
+              <div id="task-form-error" class="error"></div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    let subjects = [];
+    let selectedSubjectId = null;
+
+    const subjectsListEl = document.getElementById("subjects-list");
+    const subjectsEmptyEl = document.getElementById("subjects-empty");
+    const subjectForm = document.getElementById("subject-form");
+    const subjectFormError = document.getElementById("subject-form-error");
+    const reloadSubjectsBtn = document.getElementById("reload-subjects-btn");
+
+    const detailPlaceholder = document.getElementById("detail-placeholder");
+    const detailContent = document.getElementById("detail-content");
+    const selectedSubjectNameEl = document.getElementById("selected-subject-name");
+
+    const summaryBlock = document.getElementById("summary-block");
+    const needForm = document.getElementById("need-form");
+    const needResult = document.getElementById("need-result");
+
+    const tasksListEl = document.getElementById("tasks-list");
+    const tasksEmptyEl = document.getElementById("tasks-empty");
+    const reloadTasksBtn = document.getElementById("reload-tasks-btn");
+    const taskForm = document.getElementById("task-form");
+    const taskFormError = document.getElementById("task-form-error");
+
+    function showError(el, msg) {
+      if (!el) return;
+      el.textContent = msg || "";
+    }
+
+    async function apiGet(path) {
+      const res = await fetch(API_BASE + path);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`GET ${path} failed: ${res.status} ${text}`);
+      }
+      return res.json();
+    }
+
+    async function apiPost(path, bodyObj) {
+      const res = await fetch(API_BASE + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyObj),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`POST ${path} failed: ${res.status} ${text}`);
+      }
+      return res.json();
+    }
+
+    async function apiDelete(path) {
+      const res = await fetch(API_BASE + path, { method: "DELETE" });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`DELETE ${path} failed: ${res.status} ${text}`);
+      }
+      return res.text();
+    }
+
+    function renderSubjects() {
+      subjectsListEl.innerHTML = "";
+      if (!subjects.length) {
+        subjectsEmptyEl.style.display = "block";
+        return;
+      }
+      subjectsEmptyEl.style.display = "none";
+
+      for (const s of subjects) {
+        const li = document.createElement("li");
+        li.className = "list-item" + (s.id === selectedSubjectId ? " active" : "");
+        li.addEventListener("click", () => selectSubject(s.id));
+
+        const left = document.createElement("div");
+        const title = document.createElement("div");
+        title.className = "list-item-title";
+        title.textContent = s.name || "(no name)";
+
+        const sub = document.createElement("div");
+        sub.className = "list-item-sub";
+        const teacher = s.teacher ? `${s.teacher}` : "";
+        const credit = s.credit ? ` / ${s.credit}単位` : "";
+        sub.textContent = (teacher + credit) || "科目情報なし";
+
+        left.appendChild(title);
+        left.appendChild(sub);
+
+        const right = document.createElement("div");
+        right.style.display = "flex";
+        right.style.flexDirection = "column";
+        right.style.alignItems = "flex-end";
+        right.style.gap = "4px";
+
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        badge.textContent = `ID: ${s.id}`;
+        right.appendChild(badge);
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "secondary danger";
+        delBtn.textContent = "削除";
+        delBtn.type = "button";
+        delBtn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          if (!confirm(`「${s.name}」を本当に削除しますか？`)) return;
+          try {
+            await apiDelete(`/subjects/${s.id}`);
+            if (selectedSubjectId === s.id) {
+              selectedSubjectId = null;
+              detailContent.style.display = "none";
+              detailPlaceholder.style.display = "block";
+              selectedSubjectNameEl.textContent = "未選択";
+            }
+            await loadSubjects();
+          } catch (err) {
+            alert(err.message);
+          }
+        });
+        right.appendChild(delBtn);
+
+        li.appendChild(left);
+        li.appendChild(right);
+        subjectsListEl.appendChild(li);
+      }
+    }
+
+    async function loadSubjects() {
+      try {
+        const data = await apiGet("/subjects/");
+        subjects = data;
+        renderSubjects();
+      } catch (err) {
+        alert("科目一覧の取得に失敗しました: " + err.message);
+      }
+    }
+
+    async function selectSubject(id) {
+      selectedSubjectId = id;
+      renderSubjects();
+
+      const s = subjects.find((x) => x.id === id);
+      selectedSubjectNameEl.textContent = s ? s.name : `ID: ${id}`;
+
+      detailPlaceholder.style.display = "none";
+      detailContent.style.display = "flex";
+
+      await Promise.all([loadSummary(id), loadTasks(id)]);
+    }
+
+    async function loadSummary(subjectId) {
+      summaryBlock.textContent = "読み込み中...";
+      needResult.textContent = "まだ計算していません。";
+
+      try {
+        const data = await apiGet(`/subjects/${subjectId}/summary`);
+        summaryBlock.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        summaryBlock.textContent = "サマリー取得に失敗しました: " + err.message;
+      }
+    }
+
+    async function loadNeed(subjectId, targetGrade) {
+      needResult.textContent = "計算中...";
+      try {
+        const data = await apiGet(`/subjects/${subjectId}/need/${encodeURIComponent(targetGrade)}`);
+        needResult.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        needResult.textContent = "計算に失敗しました: " + err.message;
+      }
+    }
+
+    async function loadTasks(subjectId) {
+      tasksListEl.innerHTML = "";
+      tasksEmptyEl.style.display = "none";
+      try {
+        const data = await apiGet(`/subjects/${subjectId}/tasks`);
+        if (!data.length) {
+          tasksEmptyEl.style.display = "block";
+          return;
+        }
+        for (const t of data) {
+          const row = document.createElement("div");
+          row.className = "task-row";
+
+          const main = document.createElement("div");
+          main.className = "task-main";
+
+          const title = document.createElement("div");
+          title.className = "task-title";
+          title.textContent = t.title || "(no title)";
+          main.appendChild(title);
+
+          const meta = document.createElement("div");
+          meta.className = "task-meta";
+          const desc = t.description ? t.description : "";
+          const due = t.due_date ? ` / 期限: ${t.due_date}` : "";
+          meta.textContent = (desc + due) || "詳細なし";
+          main.appendChild(meta);
+
+          row.appendChild(main);
+
+          const right = document.createElement("div");
+          right.style.display = "flex";
+          right.style.flexDirection = "column";
+          right.style.alignItems = "flex-end";
+          right.style.gap = "4px";
+
+          const status = document.createElement("span");
+          status.className = "status-pill status-" + (t.status || "todo");
+          status.textContent = t.status || "todo";
+          right.appendChild(status);
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "secondary danger";
+          delBtn.textContent = "削除";
+          delBtn.type = "button";
+          delBtn.addEventListener("click", async () => {
+            if (!confirm(`タスク「${t.title}」を削除しますか？`)) return;
+            try {
+              await apiDelete(`/tasks/${t.id}`);
+              await loadTasks(subjectId);
+            } catch (err) {
+              alert("削除に失敗しました: " + err.message);
+            }
+          });
+
+          right.appendChild(delBtn);
+          row.appendChild(right);
+
+          tasksListEl.appendChild(row);
+        }
+      } catch (err) {
+        tasksEmptyEl.style.display = "block";
+        tasksEmptyEl.textContent = "タスク取得に失敗しました: " + err.message;
+      }
+    }
+
+    subjectForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      showError(subjectFormError, "");
+
+      const formData = new FormData(subjectForm);
+      const body = {
+        name: formData.get("name"),
+        teacher: formData.get("teacher") || null,
+        credit: formData.get("credit") ? Number(formData.get("credit")) : null,
+        memo: formData.get("memo") || null,
+      };
+      if (body.credit === null || Number.isNaN(body.credit)) {
+        delete body.credit;
+     }
+
+      try {
+        await apiPost("/subjects/", body);
+        subjectForm.reset();
+        await loadSubjects();
+      } catch (err) {
+        showError(subjectFormError, "保存に失敗しました: " + err.message);
+      }
+    });
+
+    needForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!selectedSubjectId) return;
+      const formData = new FormData(needForm);
+      const target = formData.get("target_grade");
+      if (!target) return;
+      await loadNeed(selectedSubjectId, target);
+    });
+
+    taskForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  showError(taskFormError, "");
+  if (!selectedSubjectId) {
+    showError(taskFormError, "先に左から科目を選んでください。");
+    return;
+  }
+
+  const formData = new FormData(taskForm);
+
+  // ★ バックエンドの TaskBase に合わせてキー名を変える
+  const body = {
+    // title → name にマッピング
+    name: formData.get("title"),
+
+    // とりあえず「ステータス」を type として送る（exam / report とかにしたければここ変える）
+    type: formData.get("status") || "todo",
+
+    // weight は必須なので仮で 1 を入れておく（後で入力欄作ってもいい）
+    weight: 1,
+
+    // due_date → date にマッピング
+    date: formData.get("due_date") || null,
+
+    // score は最初は None（未採点）
+    score: null,
+
+    // これはそのまま
+    subject_id: selectedSubjectId,
+  };
+
+  try {
+    await apiPost("/tasks/", body);
+    taskForm.reset();
+    await loadTasks(selectedSubjectId);
+  } catch (err) {
+    showError(taskFormError, "保存に失敗しました: " + err.message);
+  }
+});
+
+
+    reloadSubjectsBtn.addEventListener("click", loadSubjects);
+    reloadTasksBtn.addEventListener("click", () => {
+      if (selectedSubjectId) loadTasks(selectedSubjectId);
+    });
+
+    loadSubjects();
+  </script>
+</body>
+</html>
